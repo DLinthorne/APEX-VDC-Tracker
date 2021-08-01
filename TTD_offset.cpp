@@ -150,83 +150,74 @@ Int_t newTTD_Off()
     // Extract ammount of events in Tree file
     Int_t nEntries = T -> GetEntries();    
 
-    for(int i = 0; i < nEntries ; i++)
-    {
-        if((i%10000) == 1) cout << "Event: " <<  i - 1 << endl;
-    
-        // Get the entry values 	                    
-        T -> GetEntry(i);
-           
-        // Ensure that the events have hits
-        if( dat.nhit ){  
-        
-	    // Cut for single cluster events with atleast 4 hits 
-            if( dat.nclust == 1 && dat.clsiz > 3 ){
-            
-            // intialize accepted cut counter
-            accept = 0;   
- 
-                for(Int_t j = 0; j < dat.nhit; j++)
-                {       
-                
-                        if( dat.wire[j] < 96 || dat.wire[j] > 111) continue;
-                 
-                        // Looking at first entry of cluster 
-                        if( j == 0)
-                        {
-                        
-		                    // Cut on the angle, ensure proper cluster hit
-                            if(dat.dist[j] < min_dstr) continue;
-                            
-                            diff = dat.wire[j];
-                            
-                        
-                        }
-            		
-			            // If any extreme hits occur, exit iteration 
-                        if( dat.dist[j] > max_dstr) continue;  
-                 
-		                // Feed cut data to the new arrays 
-                        Tru_dis[accept] = dat.dist[j];
-                        Tru_wir[accept] = dat.wire[j];
-                        
-                        accept++;
-                        
-                        // if the wire spacing is more than '1' than set flag
-                        if( diff - dat.wire[j] > 1) badWir = kTRUE; 
-             
-                        
-                    
-                }
-                
-                if( badWir == kTRUE) continue;
+    for(int i = 0; i < nEntries ; i++){
 
+      if((i%10000) == 1) cout << "Event: " <<  i - 1 << endl;
+    
+      // Get the entry values 	                    
+      T -> GetEntry(i);
+           
+      // Ensure that the events have hits
+      if( dat.nhit ){  
+        
+      // Cut for single cluster events with atleast 4 hits 
+      if( dat.nclust == 1 && dat.clsiz > 3 ){
+            
+      	// intialize accepted cut counter
+        accept = 0;   
+ 
+        for(Int_t j = 0; j < dat.nhit; j++)
+        {       
                 
-                Double_t diff = 4.26;      // [mm]
-                Double_t x_dist[max];
-                Double_t sum = Tru_wir[0];
-                Double_t avg_w = 0;
-                x_dist[0] = 0;  
-   
-   
-                for( Int_t h = 1; h < accept; h++){
-                    
-                    sum = sum + Tru_wir[h];
-                
-                    if(Tru_wir[h] - Tru_wir[h -1] == 1 ) x_dist[h] = diff + x_dist[h - 1];
-       
-                    if(Tru_wir[h] - Tru_wir[h -1] == 2 ) x_dist[h] = 2.*diff + x_dist[h -1];
-       
-                }
-                
-                if( accept != 0) avg_w = sum/accept;
-                
-		        // Feed to linear fit algorithm 
-                // h_sep -> Fill( LineFit(Tru_dis, x_dist, dat.pivot, accept ));  
+          if( dat.wire[j] < 96 || dat.wire[j] > 111) continue;
                  
-                LineFit(Tru_dis, x_dist, dat.pivot, accept, avg_w);
-            }
-	    }
+          // Looking at first entry of cluster 
+          if( j == 0){
+                        
+          	// Cut on the angle, ensure proper cluster hit
+          	if(dat.dist[j] < min_dstr) continue;
+                            
+            diff = dat.wire[j];
+                                                
+          }
+         
+          // If any extreme hits occur, exit iteration 
+          if( dat.dist[j] > max_dstr) continue;  
+                 
+           // Feed cut data to the new arrays 
+          Tru_dis[accept] = dat.dist[j];
+          Tru_wir[accept] = dat.wire[j];                     
+          accept++;
+                        
+          // if the wire spacing is more than '1' than set flag
+          if( diff - dat.wire[j] > 1) badWir = kTRUE; 
+        
+          }
+                
+          if( badWir == kTRUE) continue;
+          
+          Double_t diff = 4.26;      // [mm]
+          Double_t x_dist[max];
+          Double_t sum = Tru_wir[0];
+          Double_t avg_w = 0;
+          x_dist[0] = 0;  
+
+          for( Int_t h = 1; h < accept; h++){
+                   
+            sum = sum + Tru_wir[h];  
+            if(Tru_wir[h] - Tru_wir[h -1] == 1 ) x_dist[h] = diff + x_dist[h - 1];
+            if(Tru_wir[h] - Tru_wir[h -1] == 2 ) x_dist[h] = 2.*diff + x_dist[h -1];
+       
+          }
+                
+          if( accept != 0) avg_w = sum/accept;
+                
+          // Feed to linear fit algorithm 
+          h_sep -> Fill( LineFit(Tru_dis, x_dist, dat.pivot, accept ));  
+                 
+          LineFit(Tru_dis, x_dist, dat.pivot, accept, avg_w);
+        }
+      }
     } 
     
     TCanvas *Can = new TCanvas();
@@ -235,13 +226,10 @@ Int_t newTTD_Off()
     
     Can -> cd(1);
     h_sep -> Draw();
-    
     Can -> cd(2);
     h2_sep -> Draw();
-    
     Can -> cd(3);
     h_off -> Draw();
-    
     Can -> cd(4);
     h2_off -> Draw();
     
@@ -266,36 +254,33 @@ Double_t LineFit ( Double_t y_dist[], Double_t x_dist[], Double_t pivot, const I
     // start sorting look to isolate these tracks
     for (Int_t j = 0; j < hits; j++){
     
-        if(j + 1 == hits){
+      if((j + 1) == hits){
     
-            line_2[count_2] = y_dist[j];
-            x_2[count_2] = x_dist[j];
-            count_2++;
-        }
+      	line_2[count_2] = y_dist[j];
+      	x_2[count_2] = x_dist[j];
+      	count_2++;
+      }
         
-        else if( y_dist[j] > y_dist[j+1]){
+      else if( y_dist[j] > y_dist[j+1]){
         
-            line_1[count_1] = y_dist[j];
-            x_1[count_1] = x_dist[j];
+        line_1[count_1] = y_dist[j];
+        x_1[count_1] = x_dist[j];  
+        count_1++;
+			}      
+      
+			if(y_dist[j + 1] < y_dist[j + 2]){
             
-            count_1++;
-            
-            if(y_dist[j + 1] < y_dist[j + 2]){
-            
-                line_1[count_1] = y_dist[j + 1];
-                x_1[count_1] = x_dist[j + 1];
-                count_1++;
-            }
-                        
-        }
+        line_1[count_1] = y_dist[j + 1];
+        x_1[count_1] = x_dist[j + 1];
+        count_1++;
+      }
         
-        else if(y_dist[j] < y_dist[j +1]){
+      else if(y_dist[j] < y_dist[j +1]){
         
-            line_2[count_2] = y_dist[j];
-            x_2[count_2] = x_dist[j];
-            
-            count_2++;
-        }
+        line_2[count_2] = y_dist[j];
+        x_2[count_2] = x_dist[j];
+				count_2++;
+      }
         
     }
     
@@ -380,15 +365,6 @@ Double_t fint(double x_1[], double y_1[], int n_1, double x_2[], double y_2[], i
     m->SetMarkerColor(kRed);
     b->SetMarkerSize(3);
     m->SetMarkerSize(3); 
-    
-    //b->Draw();
-    //m->Draw();
-    
-    //printf("x-intercept = %g\n",x_int);
-    //printf("y-intercept = %g\n",y_int);
-    //printf("x-base = %g\n",base);
-    //printf("delta-s = %g\n", delta_s);
-        
     
     if( y_int < 0) delta_s = (-1)*delta_s;
     
